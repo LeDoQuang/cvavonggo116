@@ -1,0 +1,263 @@
+// ==========================================
+// 1. DATA 19 LỚP 
+// ==========================================
+const data19Lop = {
+    "lopA1": { title: "12A1", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopA2": { title: "12A2", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopA3": { title: "12A3", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopD1": { title: "12D1", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopD2": { title: "12D2", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopToan": { title: "12 Toán", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopTin": { title: "12 Tin", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopLy": { title: "12 Lý", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopHoa": { title: "12 Hóa", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopSinh": { title: "12 Sinh", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopVan": { title: "12 Văn", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopSu": { title: "12 Sử", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopDia": { title: "12 Địa", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopAnh": { title: "12 Anh", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopPhap": { title: "12 Pháp", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopNhat": { title: "12 Nhật", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopSongNgu": { title: "12 Song Ngữ", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopI1": { title: "12 I1", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" },
+    "lopI2": { title: "12 I2", videoUrl: "", content: "<p>Kí ức của bạn đang được cập nhật...</p>" }
+};
+
+// ==========================================
+// 2. LOGIC MODAL & LAZY LOAD TỐI ƯU HÓA 
+// ==========================================
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        // 1. Ưu tiên bật bảng lên ngay lập tức để CSS chạy mượt nhất
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden'; 
+
+        // 2. Chờ CSS chạy xong (khoảng 400ms) rồi mới bắt đầu tải ảnh để chống giật
+        setTimeout(() => {
+            const lazyImages = modal.querySelectorAll('img[data-src]');
+            
+            // 3. Tải nhỏ giọt: Mỗi ảnh tải cách nhau 100ms để không bị nghẽn mạng và CPU
+            lazyImages.forEach((img, index) => {
+                setTimeout(() => {
+                    if (img.getAttribute('data-src')) {
+                        img.src = img.getAttribute('data-src'); // Gắn link ảnh thật vào
+                        img.removeAttribute('data-src'); // Xóa data-src đi
+                        
+                        // Xóa hiệu ứng nhấp nháy nền sau khi ảnh đã load xong
+                        img.onload = () => img.classList.remove('img-loading');
+                    }
+                }, index * 100); 
+            });
+        }, 400); 
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+function openClass(classId) {
+    const data = data19Lop[classId];
+    if (!data) return;
+
+    document.getElementById('dynamic-class-title').innerText = data.title;
+    document.getElementById('dynamic-class-text').innerHTML = data.content;
+
+    const videoContainer = document.getElementById('dynamic-video-container');
+    if (data.videoUrl) {
+        videoContainer.style.display = "block";
+        videoContainer.innerHTML = `<iframe src="${data.videoUrl}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+    } else {
+        videoContainer.style.display = "none";
+        videoContainer.innerHTML = "";
+    }
+    openModal('modal-class-detail');
+}
+
+function closeClassModal() {
+    closeModal('modal-class-detail');
+    setTimeout(() => { document.getElementById('dynamic-video-container').innerHTML = ""; }, 300); 
+}
+
+// Bấm ra ngoài rìa để đóng modal
+document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.id === 'modal-class-detail' ? closeClassModal() : closeModal(this.id);
+        }
+    });
+});
+
+// ==========================================
+// 3. LOGIC COUNTDOWN 
+// ==========================================
+function initCountdown(targetDate, prefix) {
+    const target = new Date(targetDate).getTime();
+    const els = {
+        d: document.getElementById(`${prefix}-days`),
+        h: document.getElementById(`${prefix}-hours`),
+        m: document.getElementById(`${prefix}-minutes`)
+    };
+
+    if (!els.d || !els.h || !els.m) return;
+
+    const updateTimer = () => {
+        const distance = target - new Date().getTime();
+        if (distance < 0) {
+            els.d.innerText = els.h.innerText = els.m.innerText = "00";
+            return true; 
+        }
+        els.d.innerText = Math.floor(distance / 86400000).toString().padStart(2, '0');
+        els.h.innerText = Math.floor((distance % 86400000) / 3600000).toString().padStart(2, '0');
+        els.m.innerText = Math.floor((distance % 3600000) / 60000).toString().padStart(2, '0');
+        return false;
+    };
+
+    if (!updateTimer()) {
+        setInterval(updateTimer, 1000);
+    }
+}
+
+// ==========================================
+// 4. TRÌNH PHÁT NHẠC
+// ==========================================
+const musicPath = './music/'; 
+const playlist = [
+    { title: "Chu Văn An Trong Tim Ta", src: musicPath + "bai1.mp3" },
+    { title: "Giữ Anh Ngày Hôm Qua", src: musicPath + "bai2.mp3" },
+    { title: "Phép Màu", src: musicPath + "bai3.mp3" },
+    { title: "Vùng Ký Ức", src: musicPath + "bai4.mp3" },
+    { title: "Như Ngày Hôm Qua", src: musicPath + "bai5.mp3" },
+    { title: "Đại Lộ Mặt Trời", src: musicPath + "bai6.mp3" },
+    { title: "Beauty and a Beat", src: musicPath + "bai7.mp3" },
+    { title: "Cảm Ơn Người Đã Thức Cùng Tôi", src: musicPath + "bai8.mp3" }
+
+];
+
+let currentSongIndex = 0;
+let isPlaying = false;
+let audio, vinylRecord, songTitleDisplay;
+
+function loadSong(index) {
+    if (!audio || !songTitleDisplay) return;
+    audio.src = playlist[index].src;
+    songTitleDisplay.setAttribute('data-original-title', playlist[index].title);
+    songTitleDisplay.innerText = playlist[index].title;
+    setTimeout(checkMarquee, 50); 
+}
+
+function checkMarquee() {
+    const wrapper = document.querySelector('.song-title-wrapper');
+    const title = songTitleDisplay;
+    title.classList.remove('scrolling');
+    title.style.animation = 'none';
+    const originalText = title.getAttribute('data-original-title');
+    title.innerHTML = originalText; 
+    void title.offsetWidth; 
+
+    if (title.scrollWidth > wrapper.clientWidth) {
+        title.innerHTML = `<span class="mq-part">${originalText}</span><span class="mq-part" style="padding-left: 30px;">${originalText}</span>`;
+        title.style.setProperty('--scroll-dist', `-${title.querySelector('.mq-part').offsetWidth + 30}px`);
+        title.style.animation = ''; 
+        title.classList.add('scrolling');
+    }
+}
+
+function togglePlay() {
+    if (!audio || !vinylRecord) return;
+    if (isPlaying) {
+        audio.pause();
+        vinylRecord.classList.remove('playing');
+    } else {
+        audio.play().catch(() => console.log("Trình duyệt chặn autoplay"));
+        vinylRecord.classList.add('playing');
+    }
+    isPlaying = !isPlaying;
+}
+
+function nextSong() {
+    currentSongIndex = (currentSongIndex + 1) % playlist.length;
+    loadSong(currentSongIndex);
+    if (isPlaying) audio.play();
+}
+
+// ==========================================
+// 5. ZOOM ẢNH VÀ LƯỚT ẢNH (LIGHTBOX)
+// ==========================================
+let currentImageIndex = 0;
+let galleryImages = [];
+
+function openLightbox(index) {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    galleryImages = Array.from(document.querySelectorAll('.gallery-img')); 
+    currentImageIndex = index;
+    lightboxImg.src = galleryImages[currentImageIndex].src;
+    lightbox.style.display = 'flex';
+}
+
+function closeLightbox() {
+    document.getElementById('lightbox').style.display = 'none';
+}
+
+function changeLightboxImage(step) {
+    currentImageIndex += step;
+    if (currentImageIndex >= galleryImages.length) {
+        currentImageIndex = 0;
+    } else if (currentImageIndex < 0) {
+        currentImageIndex = galleryImages.length - 1;
+    }
+    document.getElementById('lightbox-img').src = galleryImages[currentImageIndex].src;
+}
+
+document.getElementById('lightbox').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeLightbox();
+    }
+});
+
+
+// ==========================================
+// 6. KHỞI CHẠY & SPLASH SCREEN
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('no-scroll');
+
+    const splashScreen = document.getElementById('splash-screen');
+    const enterBtn = document.getElementById('enter-btn');
+    const bellSound = document.getElementById('bell-sound');
+
+    enterBtn.addEventListener('click', () => {
+        if (bellSound) {
+            bellSound.volume = 0.5;
+            bellSound.play().catch(e => console.log("Lỗi phát chuông:", e));
+        }
+        splashScreen.classList.add('hidden');
+        setTimeout(() => { document.body.classList.remove('no-scroll'); }, 1500);
+        setTimeout(() => { if (!isPlaying) togglePlay(); }, 2500); 
+    });
+
+    initCountdown("May 23, 2026 07:00:00", "bg");
+    initCountdown("June 11, 2026 07:00:00", "thpt");
+    
+    audio = document.getElementById('bg-music');
+    vinylRecord = document.querySelector('.vinyl-record');
+    songTitleDisplay = document.getElementById('song-title');
+
+    if (audio) {
+        audio.addEventListener('ended', nextSong);
+        loadSong(currentSongIndex);
+    }
+
+    setTimeout(() => {
+        const images = document.querySelectorAll('.gallery-img');
+        images.forEach((img, index) => {
+            img.addEventListener('click', () => openLightbox(index));
+        });
+    }, 1000);
+});
